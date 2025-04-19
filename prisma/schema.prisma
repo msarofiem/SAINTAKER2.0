@@ -11,27 +11,39 @@ datasource db {
 }
 
 model Lead {
-  id              String    @id @default(uuid())
-  firstName       String
-  lastName        String
-  phoneNumber     String
-  email           String?
-  language        String    @default("English")
-  source          String?
-  typeOfAccident  String
-  dateOfAccident  DateTime
-  policeInvolved  Boolean   @default(false)
-  insurance       String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  status          String    @default("New")
+  id                   String    @id @default(uuid())
+  firstName            String
+  lastName             String
+  phoneNumber          String
+  email                String?
+  language             String    @default("English")
+  source               String?
+  typeOfAccident       String
+  dateOfAccident       DateTime
+  policeInvolved       Boolean   @default(false)
+  insurance            String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  status               String    @default("New")
+  hasUmUimCoverage     Boolean   @default(false)
+  hasResidentRelatives Boolean   @default(false)
   
   // Relations
-  address         Address?
-  injuries        Injury[]
-  priorAttorney   PriorAttorney?
-  uploads         Upload[]
-  chaseLogs       ChaseLog[]
+  address              Address?
+  injuries             Injury[]
+  priorAttorney        PriorAttorney?
+  uploads              Upload[]
+  chaseLogs            ChaseLog[]
+  
+  // Phase 4 Relations
+  evaluation           IntakeEvaluation?
+  staffAssignment      StaffAssignment?
+  touchpoints          ClientTouchpoint[]
+  referrals            Referral[]
+  carrierAccess        CarrierAccess[]
+  
+  // Phase 5 Relations
+  litigationAssessment LitigationAssessment?
 }
 
 model Address {
@@ -99,4 +111,161 @@ model ChaseLog {
   // Relations
   lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   leadId        String
+}
+
+// Phase 4 Models
+
+model IntakeEvaluation {
+  id              String    @id @default(uuid())
+  score           Int       // 0-100 score
+  recommendation  String    // Accept, Review, Reject
+  redFlags        String?
+  strengths       String?
+  aiResponse      String?   // Full GPT response
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId          String    @unique
+}
+
+model StaffAssignment {
+  id              String    @id @default(uuid())
+  isActive        Boolean   @default(true)
+  assignedAt      DateTime  @default(now())
+  language        String?
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId          String    @unique
+  staff           StaffMember @relation(fields: [staffId], references: [id])
+  staffId         String
+}
+
+model StaffMember {
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  languages       String[]  // Array of languages spoken
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  assignments     StaffAssignment[]
+}
+
+model ClientTouchpoint {
+  id              String    @id @default(uuid())
+  type            String    // SMS, Email
+  status          String    // Pending, Sent, Failed
+  messageContent  String
+  scheduledFor    DateTime
+  sentAt          DateTime?
+  deliveryMethod  String?   // Twilio, Email
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId          String
+}
+
+model ReferralFeedback {
+  id              String    @id @default(uuid())
+  status          String    // Pending, Accepted, Declined
+  fee             Float?
+  comments        String?
+  responseAt      DateTime?
+  lastReminderAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  referral        Referral  @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  referralId      String    @unique
+}
+
+model Referral {
+  id              String    @id @default(uuid())
+  referredTo      String
+  referralDate    DateTime  @default(now())
+  email           String
+  phoneNumber     String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId          String
+  feedback        ReferralFeedback?
+  match           ReferralMatch?
+}
+
+model CarrierAccess {
+  id              String    @id @default(uuid())
+  carrierName     String
+  carrierEmail    String
+  accessToken     String    @unique
+  expiresAt       DateTime
+  lastAccessedAt  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId          String
+}
+
+// Phase 5 Models
+
+model LitigationAssessment {
+  id                String    @id @default(uuid())
+  recommendedAction String    // Settle, File, Trial
+  settleProbability Float?    // Percentage for settlement
+  fileProbability   Float?    // Percentage for filing
+  trialProbability  Float?    // Percentage for trial
+  reasoning         String?   // AI reasoning
+  aiResponse        String?   // Full GPT response
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  lead              Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId            String    @unique
+}
+
+model ReferralPartner {
+  id                String    @id @default(uuid())
+  name              String
+  email             String    @unique
+  phone             String?
+  specialty         String[]  // Array of specialties
+  zip               String[]  // Array of zip codes covered
+  languages         String[]  // Array of languages
+  responsiveness    Float?    // Score 0-100
+  feeSplitRatio     Float?    // Default percentage
+  active            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  matches           ReferralMatch[]
+}
+
+model ReferralMatch {
+  id                String    @id @default(uuid())
+  matchQuality      Float     // Score 0-100
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  referral          Referral   @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  referralId        String     @unique
+  partner           ReferralPartner @relation(fields: [partnerId], references: [id])
+  partnerId         String
 }

@@ -36,11 +36,12 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-app.use('/api/intake', authMiddleware, intakeRoutes);
-app.use('/api/documents', authMiddleware, documentsRoutes);
-app.use('/api/referrals', authMiddleware, referralsRoutes);
+app.use('/api/intake', intakeRoutes);
+app.use('/api/documents', documentsRoutes);
+app.use('/api/referrals', referralsRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', authMiddleware, dashboardRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
