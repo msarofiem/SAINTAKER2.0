@@ -82,6 +82,25 @@ export const createShortFormLead = async (req: Request, res: Response) => {
     });
 
     await scheduleFollowUpChaseLogs(lead.id);
+    
+    try {
+      const { scheduleLeadTouchpoints } = require('../../scheduler/touchpointScheduler');
+      await scheduleLeadTouchpoints(lead.id);
+    } catch (error) {
+      console.error('Error scheduling touchpoints:', error);
+    }
+    
+    try {
+      const { assignLeadToStaff, getStaffAssignmentSettings } = require('../../utils/staffAssignment');
+      const settings = await getStaffAssignmentSettings();
+      const assignment = await assignLeadToStaff(lead.id, settings.autoAssignEnabled);
+      
+      if (assignment) {
+        console.log(`Lead ${lead.id} assigned to staff ${assignment.staffId}`);
+      }
+    } catch (error) {
+      console.error('Error assigning lead to staff:', error);
+    }
 
     return res.status(200).json({
       success: true,

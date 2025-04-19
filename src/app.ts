@@ -11,6 +11,8 @@ import signatureRoutes from './api/signatures/routes';
 import exportRoutes from './api/exports/routes';
 import lienRoutes from './api/liens/routes';
 import analyticsRoutes from './api/analytics/routes';
+import staffRoutes from './api/staff/routes';
+import carrierRoutes from './api/carriers/routes';
 
 export const prisma = new PrismaClient();
 const app = express();
@@ -51,6 +53,8 @@ app.use('/api/signatures', authMiddleware, signatureRoutes);
 app.use('/api/exports', authMiddleware, exportRoutes);
 app.use('/api/liens', authMiddleware, lienRoutes);
 app.use('/api/analytics', authMiddleware, analyticsRoutes);
+app.use('/api/staff', authMiddleware, staffRoutes);
+app.use('/api/carriers', authMiddleware, carrierRoutes);
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err.stack);
