@@ -26,7 +26,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use((err, req, res, next) => {
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error in test app:', err);
   res.status(500).json({
     success: false,

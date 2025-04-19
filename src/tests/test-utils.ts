@@ -20,7 +20,8 @@ export const prisma = {
   },
   chaseLog: {
     create: jest.fn(),
-    findMany: jest.fn()
+    findMany: jest.fn(),
+    update: jest.fn()
   },
   intakeEvaluation: {
     create: jest.fn(),
