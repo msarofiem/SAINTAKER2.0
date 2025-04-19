@@ -11,27 +11,31 @@ datasource db {
 }
 
 model Lead {
-  id              String    @id @default(uuid())
-  firstName       String
-  lastName        String
-  phoneNumber     String
-  email           String?
-  language        String    @default("English")
-  source          String?
-  typeOfAccident  String
-  dateOfAccident  DateTime
-  policeInvolved  Boolean   @default(false)
-  insurance       String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  status          String    @default("New")
+  id                   String    @id @default(uuid())
+  firstName            String
+  lastName             String
+  phoneNumber          String
+  email                String?
+  language             String    @default("English")
+  source               String?
+  typeOfAccident       String
+  dateOfAccident       DateTime
+  policeInvolved       Boolean   @default(false)
+  insurance            String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  status               String    @default("New")
+  hasUmUimCoverage     Boolean   @default(false)
+  hasResidentRelatives Boolean   @default(false)
   
   // Relations
-  address         Address?
-  injuries        Injury[]
-  priorAttorney   PriorAttorney?
-  uploads         Upload[]
-  chaseLogs       ChaseLog[]
+  address              Address?
+  injuries             Injury[]
+  priorAttorney        PriorAttorney?
+  uploads              Upload[]
+  chaseLogs            ChaseLog[]
+  portalAccess         ClientPortalAccess?
+  liens                LienRecord[]
 }
 
 model Address {
@@ -78,12 +82,14 @@ model Upload {
   fileName      String
   fileType      String
   fileUrl       String
+  documentType  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
   // Relations
   lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   leadId        String
+  signatures    DocumentSignature[]
 }
 
 model ChaseLog {
@@ -98,5 +104,50 @@ model ChaseLog {
   
   // Relations
   lead          Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId        String
+}
+
+model ClientPortalAccess {
+  id            String    @id @default(uuid())
+  token         String    @unique
+  pin           String?
+  expiresAt     DateTime
+  accessedAt    DateTime?
+  ipAddress     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId        String    @unique
+}
+
+model DocumentSignature {
+  id              String    @id @default(uuid())
+  status          String    // pending, signed, uploaded, failed
+  signedAt        DateTime?
+  ipAddress       String?
+  signatureToken  String?   @unique
+  signerName      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  document        Upload    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId      String
+}
+
+model LienRecord {
+  id            String    @id @default(uuid())
+  lienType      String    // Medicare, Medicaid, Private
+  lienHolder    String
+  amount        Float?
+  status        String    // pending, received, negotiated, paid
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  lead          Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
   leadId        String
 }

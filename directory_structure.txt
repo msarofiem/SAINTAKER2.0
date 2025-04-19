@@ -1,0 +1,15 @@
+src/
+├── api/
+│   ├── intake/
+│   ├── documents/
+│   ├── referrals/
+│   ├── auth/
+│   └── dashboard/
+├── sockets/
+├── prisma/
+│   ├── schema.prisma
+│   └── seed.ts
+├── utils/
+├── app.ts
+├── server.ts
+└── config.ts
