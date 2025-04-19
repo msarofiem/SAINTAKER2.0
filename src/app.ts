@@ -7,7 +7,73 @@ import referralsRoutes from './api/referrals/routes';
 import authRoutes from './api/auth/routes';
 import dashboardRoutes from './api/dashboard/routes';
 
-export const prisma = new PrismaClient();
+export const prisma = process.env.NODE_ENV === 'test' 
+  ? {
+      lead: {
+        create: jest.fn().mockResolvedValue({ id: 'mock-id' }),
+        findUnique: jest.fn().mockImplementation((params) => {
+          if (params?.where?.id === 'mock-id') {
+            return Promise.resolve({ 
+              id: 'mock-id', 
+              firstName: 'John', 
+              lastName: 'Doe',
+              phoneNumber: '1234567890',
+              email: 'john@example.com',
+              dateOfAccident: new Date(),
+              typeOfAccident: 'Auto',
+              status: 'New',
+              address: { street: '123 Main St', city: 'New York', state: 'NY', zip: '10001' },
+              injuries: [{ bodyPart: 'Back', description: 'Pain' }],
+              priorAttorney: { spokenTo: false }
+            });
+          }
+          return Promise.resolve(null);
+        }),
+        findMany: jest.fn().mockResolvedValue([
+          { id: 'mock-id-1', firstName: 'John', lastName: 'Doe', status: 'New', createdAt: new Date() },
+          { id: 'mock-id-2', firstName: 'Jane', lastName: 'Smith', status: 'In Progress', createdAt: new Date() }
+        ]),
+        update: jest.fn().mockResolvedValue({ id: 'mock-id', status: 'Updated' }),
+        count: jest.fn().mockResolvedValue(2),
+        groupBy: jest.fn().mockResolvedValue([
+          { source: 'Website', _count: 3 },
+          { source: 'Referral', _count: 2 }
+        ])
+      },
+      upload: {
+        create: jest.fn().mockResolvedValue({
+          id: 'doc-id',
+          fileName: 'test.pdf',
+          fileType: 'application/pdf',
+          fileUrl: '/uploads/test.pdf'
+        }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'doc-id',
+          fileName: 'test.pdf',
+          fileType: 'application/pdf',
+          fileUrl: '/uploads/test.pdf'
+        })
+      },
+      address: {
+        create: jest.fn().mockResolvedValue({ id: 'address-id' })
+      },
+      injury: {
+        createMany: jest.fn().mockResolvedValue({ count: 1 })
+      },
+      priorAttorney: {
+        create: jest.fn().mockResolvedValue({ id: 'attorney-id' })
+      },
+      chaseLog: {
+        create: jest.fn().mockResolvedValue({ id: 'chase-id' }),
+        createMany: jest.fn().mockResolvedValue({ count: 3 })
+      },
+      $queryRaw: jest.fn().mockResolvedValue([
+        { date: '2023-07-01', count: 2 },
+        { date: '2023-07-02', count: 1 }
+      ])
+    } 
+  : new PrismaClient();
+
 const app = express();
 
 app.use(cors());
